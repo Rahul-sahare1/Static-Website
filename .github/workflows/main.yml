@@ -39,7 +39,7 @@ jobs:
 
           docker tag \
             rahulsahare/ardent-world-static:${{ github.sha }} \
-            rahulsahare/ardent-world-static:latest
+            rahulsahare/ardent-world-static:latest-1
 
       - name: Push Docker Image
         run: |
@@ -69,7 +69,7 @@ jobs:
 
             echo "Starting deployment..."
 
-            docker pull rahulsahare/ardent-world-static:latest
+            docker pull rahulsahare/ardent-world-static:latest-1
 
             docker stop ardent-world || true
 
@@ -79,7 +79,7 @@ jobs:
               --name ardent-world \
               --restart unless-stopped \
               -p 80:80 \
-              rahulsahare/ardent-world-static:latest
+              rahulsahare/ardent-world-static:latest-1
 
             echo "Deployment completed successfully."
 
