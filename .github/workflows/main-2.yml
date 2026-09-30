@@ -1,0 +1,91 @@
+name: Static Website Docker CI/CD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  docker:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Source Code
+        uses: actions/checkout@v6
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t rahulsahare/ardent-world-static:${{ github.sha }} \
+            .
+
+          docker tag \
+            rahulsahare/ardent-world-static:${{ github.sha }} \
+            rahulsahare/ardent-world-static:latest-1
+
+      - name: Push Docker Image
+        run: |
+          docker push rahulsahare/ardent-world-static:${{ github.sha }}
+          docker push rahulsahare/ardent-world-static:latest-1
+
+  deploy:
+    name: Deploy to EC2
+    needs: docker
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+
+      - name: Deploy Docker Container
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+
+          script: |
+            set -e
+
+            echo "Starting deployment..."
+
+            docker pull rahulsahare/ardent-world-static:latest-1
+
+            docker stop ardent-world || true
+            docker rm ardent-world || true
+
+            docker run -d \
+              --name ardent-world \
+              --restart unless-stopped \
+              -p 80:80 \
+              rahulsahare/ardent-world-static:latest-1
+
+            echo "Deployment completed successfully."
+
+  verify:
+    name: Verify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Verify Website
+        run: |
+          echo "Waiting for website to start..."
+          sleep 10
+
+          curl -f http://${{ secrets.EC2_HOST }}
+
+          echo "Website verification completed successfully."
