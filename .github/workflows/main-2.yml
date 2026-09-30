@@ -88,4 +88,4 @@ jobs:
 
           curl -f http://${{ secrets.EC2_HOST }}
 
-          echo "Website verification completed successfully."
+          echo "Website verification completed successfully
