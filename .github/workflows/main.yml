@@ -44,7 +44,7 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push rahulsahare/ardent-world-static:${{ github.sha }}
-          docker push rahulsahare/ardent-world-static:latest
+          docker push rahulsahare/ardent-world-static:latest-1
 
   deploy:
     name: Deploy to EC2
